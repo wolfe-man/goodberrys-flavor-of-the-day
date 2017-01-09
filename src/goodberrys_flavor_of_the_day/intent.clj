@@ -3,7 +3,8 @@
             [clj-time.core :as t]
             [clj-time.format :as f]
             [clj-time.predicates :as p]
-            [environ.core :refer [env]]))
+            [environ.core :refer [env]]
+            [goodberrys-flavor-of-the-day.util :refer [help-request]]))
 
 
 (def cred {:access-key (:dynamodb-access-key env)
@@ -34,8 +35,12 @@
 
 (defn get-output [{:keys [slots]}]
   (let [date (get-in slots [:Date :value])
-        yyyy-MM-dd (if date
+        yyyy-MM-dd (cond
+                     (= date "")
+                     (help-request)
                      date
+                     date
+                     :else
                      (-> (f/formatter "yyyy-MM-dd")
                          (f/with-zone (t/time-zone-for-id "America/New_York"))
                          (f/unparse (t/now))))]

@@ -3,8 +3,9 @@
    :implements [com.amazonaws.services.lambda.runtime.RequestStreamHandler])
   (:require [clojure.java.io :as io]
             [clojure.data.json :as json]
-            [goodberrys-flavor-of-the-day.launch :refer [launch-request]]
-            [goodberrys-flavor-of-the-day.intent :refer [intent-request]]))
+            [goodberrys-flavor-of-the-day.intent :refer [intent-request]]
+            [goodberrys-flavor-of-the-day.util :refer [help-request
+                                                       launch-request]]))
 
 
 (defn build-speechlet [{:keys [title output reprompt-text
@@ -14,8 +15,8 @@
    "response" {"outputSpeech" {"type" "PlainText"
                                "text" output}
                "card" {"type" "Simple"
-                       "title" (str "SessionSpeechlet - " title)
-                       "content" (str "SessionSpeechlet - " output)}
+                       "title" title
+                       "content" output}
                "reprompt" {"outputSpeech" {"type" "PlainText"
                                            "text" reprompt-text}}
                "shouldEndSession" should-end-session}})
@@ -27,9 +28,17 @@
     (let [req (json/read (io/reader input) :key-fn keyword)
           event-object (:request req)
           file-type (:type event-object)
-          resp (case file-type
-                 "LaunchRequest" (launch-request)
-                 "IntentRequest" (intent-request event-object))]
+          resp
+          (cond
+            (= "LaunchRequest" file-type)
+            (launch-request)
+
+            (and (= "IntentRequest" file-type)
+                 (= "AMAZON.HelpIntent" (get-in event-object [:intent :name])))
+            (help-request)
+
+            (= "IntentRequest" file-type)
+            (intent-request event-object))]
       (-> resp
           build-speechlet
           (json/write w)))
