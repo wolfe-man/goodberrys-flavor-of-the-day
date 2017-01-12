@@ -5,11 +5,12 @@
   {:title "Help"
    :output (str "I know the flavor of the day at good berry's for every date "
                 "in the month.  Just say, alexa, ask good berry's what is "
-                "the flavor of the day. Do you want to ask me for a date?")
+                "the flavor of the day. Do you want to ask me for a "
+                "date this month?")
    :reprompt-text (str "I know the flavor of the day at good berry's for "
                        "every date in the month.  Just say, alexa, ask "
                        "good berry's what is the flavor of the day. "
-                       "Do you want to ask me for a date?")
+                       "Do you want to ask me for a date this month?")
    :should-end-session false})
 
 

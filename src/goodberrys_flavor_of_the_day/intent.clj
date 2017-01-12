@@ -2,6 +2,7 @@
   (:require [amazonica.aws.dynamodbv2 :as db]
             [clj-time.core :as t]
             [clj-time.format :as f]
+            [clj-time.local :as l]
             [clj-time.predicates :as p]
             [environ.core :refer [env]]
             [goodberrys-flavor-of-the-day.util :refer [help-request]]))
@@ -33,14 +34,9 @@
           [:item :flavor]))
 
 
-(defn get-output [{:keys [slots]}]
-  (let [date (get-in slots [:Date :value])
-        yyyy-MM-dd (cond
-                     (= date "")
-                     (help-request)
+(defn get-output [date]
+  (let [yyyy-MM-dd (if date
                      date
-                     date
-                     :else
                      (-> (f/formatter "yyyy-MM-dd")
                          (f/with-zone (t/time-zone-for-id "America/New_York"))
                          (f/unparse (t/now))))]
@@ -48,9 +44,31 @@
      :flavor-of-the-day (get-flavor-of-the-day yyyy-MM-dd)}))
 
 
+(defn parse-number
+  "Reads a number from a string. Returns nil if not a number."
+  [s]
+  (if (re-find #"^-?\d+\.?\d*$" s)
+    (read-string s)))
+
+
+(defn invalid-date? [yyyy-MM-dd]
+  (and yyyy-MM-dd
+       (or (= "" yyyy-MM-dd)
+           (let [[year month day] (-> yyyy-MM-dd
+                                      (clojure.string/split  #"-")
+                                      ((partial map parse-number)))]
+             (or (not= year (t/year (l/local-now)))
+                 (not= month (t/month (l/local-now)))
+                 (not (pos? day))
+                 (> day 31))))))
+
+
 (defn intent-request [{:keys [intent]}]
-  (let [{:keys [day flavor-of-the-day]} (get-output intent)]
-    {:title "Flavor of the Day"
-     :output (str day " Flavor of the Day is " flavor-of-the-day ". Yum.")
-     :reprompt-text ""
-     :should-end-session true}))
+  (let [date (get-in intent [:slots :Date :value])]
+    (if (invalid-date? date)
+      (help-request)
+      (let [{:keys [day flavor-of-the-day]} (get-output date)]
+        {:title "Flavor of the Day"
+         :output (str day " Flavor of the Day is " flavor-of-the-day ". Yum.")
+         :reprompt-text ""
+         :should-end-session true}))))
