@@ -72,3 +72,17 @@
          :output (str day " Flavor of the Day is " flavor-of-the-day ". Yum.")
          :reprompt-text ""
          :should-end-session true}))))
+
+
+#_(defn upload-flavors []
+    (->> (slurp "/Users/cwolfe/Workbook1.csv")
+         ((fn [s] (clojure.string/split s #"\r\n")))
+         (map (fn [s] (clojure.string/split s #",")))
+         (map (fn [[d f]] (hash-map :date d :flavor f)))
+         (map (fn [i]
+                (println i)
+                (db/put-item cred
+                             :table-name "goodberrys-flavor-of-the-day"
+                             :return-consumed-capacity "TOTAL"
+                             :return-item-collection-metrics "SIZE"
+                             :item i)))))
