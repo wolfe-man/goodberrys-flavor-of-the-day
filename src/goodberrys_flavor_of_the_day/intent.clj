@@ -44,6 +44,24 @@
      :flavor-of-the-day (get-flavor-of-the-day yyyy-MM-dd)}))
 
 
+(defn get-reaction [flavor-of-the-day]
+  (cond
+    (#{"Pralines and Cream" "Pistachio"
+       "Hazelnut" "Butter Pecan"
+       "Rum Raisin" "Jamocha"} flavor-of-the-day)
+    "Grown up flavor"
+
+    (#{"Blackberry" "Raspberry" "Salted Caramel"
+       "Burgundy Cherry" "Strawberry"} flavor-of-the-day)
+    "Delicious"
+
+    (#{"Coconut" "Peppermint"
+       "Cheesecake" "Sweet Cream"} flavor-of-the-day)
+    "Enjoy"
+
+    :else "Yum"))
+
+
 (defn parse-number
   "Reads a number from a string. Returns nil if not a number."
   [s]
@@ -67,9 +85,11 @@
   (let [date (get-in intent [:slots :Date :value])]
     (if (invalid-date? date)
       (help-request)
-      (let [{:keys [day flavor-of-the-day]} (get-output date)]
+      (let [{:keys [day flavor-of-the-day]} (get-output date)
+            reaction (get-reaction flavor-of-the-day)]
         {:title "Flavor of the Day"
-         :output (str day " Flavor of the Day is " flavor-of-the-day ". Yum.")
+         :output (str day " Flavor of the Day is " flavor-of-the-day ". "
+                      reaction ".")
          :reprompt-text ""
          :should-end-session true}))))
 
