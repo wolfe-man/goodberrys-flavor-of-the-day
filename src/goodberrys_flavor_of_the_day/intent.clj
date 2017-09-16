@@ -95,9 +95,13 @@
 
 
 #_(defn upload-flavors []
-    (->> (slurp "/Users/cwolfe/Workbook1.csv")
-         ((fn [s] (clojure.string/split s #"\r\n")))
-         (map (fn [s] (clojure.string/split s #",")))
+  (let [dates (->> (t/date-time 2017 9 1)
+                   (iterate #(t/plus % (t/days 1)))
+                   (take 50)
+                   (map #(f/unparse (f/formatter "yyyy-MM-dd") %)))
+        flavors ["Sweet Cream" "Raspberry" "Jamocha" "Chocolate Malt" "Peanut Butter" "Butter Pecan" "Strawberry" "Banana Pudding" "Pistachio" "Nutella" "Mint Choc Chip" "Pralines and Cream" "Burgundy Cherry" "Blackberry" "Sweet Cream" "Choc Chip Cookie Dough" "Salted Caramel" "Strawberry" "Banana Pudding" "Pistachio" "Jamocha" "Peanut Butter" "Burgundy Cherry" "Cheesecake" "Choc Chip Cookie Dough" "Mint Choc Chip" "Chocolate Malt" "Butter Pecan" "Nutella" "Pumpkin"]]
+    (->> (interleave dates flavors)
+         (partition 2)
          (map (fn [[d f]] (hash-map :date d :flavor f)))
          (map (fn [i]
                 (println i)
@@ -105,4 +109,4 @@
                              :table-name "goodberrys-flavor-of-the-day"
                              :return-consumed-capacity "TOTAL"
                              :return-item-collection-metrics "SIZE"
-                             :item i)))))
+                             :item i))))))
